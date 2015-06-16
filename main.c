@@ -92,7 +92,7 @@ static double GetVbit(unsigned char Chan);
 static unsigned short CalcOffsetRawValueFromVoltage(double volts,unsigned char Chan);
 static unsigned short CalcRawValueFromVoltage(double val, unsigned char Chan);
 static double CalcVoltageFromRawValue(unsigned short pt, double vbit, int ProbeAttn);
-static void VoltageConvert();
+static void VoltageConvert19();
 static void ConfigureHardwareMSO19();
 static void send_error(char *error_text);
 static char x2c(char *what);
@@ -304,7 +304,7 @@ void GetUSBVid()
 //	return 0;
 }
 //-----------------------------------------------------
-//Parse SPI EEProm data into MSO calibration parameters
+//Parse Serial number into MSO calibration parameters
 void Parse19Sn(unsigned char *Buf)
 {
 //    int BufPos;
@@ -322,13 +322,14 @@ void Parse19Sn(unsigned char *Buf)
 	BufVal = ((Buf[5]&0x0f)*100)+((Buf[6]&0x0f)*10)
 			+(Buf[7]&0x0f);
 
-	OffsetVBit[0] = (double)3000.0/BufVal;
-	OffsetVBit[1] = OffsetVBit[0];
+	OffsetCenterVal[0] = BufVal;
+	OffsetCenterVal[1] =OffsetCenterVal[0];
 
 	BufVal = ((Buf[8]&0x0f)*100)+((Buf[9]&0x0f)*10)
 			+(Buf[10]&0x0f);
-	OffsetCenterVal[0] = BufVal;
-	OffsetCenterVal[1] =OffsetCenterVal[0];
+
+	OffsetVBit[0] = (double)3000.0/BufVal;
+	OffsetVBit[1] = OffsetVBit[0];
 
 	BufVal = ((Buf[13]&0x0f)*100000)+((Buf[14]&0x0f)*10000)
 			+((Buf[15]&0x0f)*1000)+((Buf[16]&0x0f)*100)
@@ -340,7 +341,9 @@ void Parse19Sn(unsigned char *Buf)
 			+((Buf[21]&0x0f)*100)+((Buf[22]&0x0f)*10)
 			+(Buf[23]&0x0f);
 
-	if(BufVal == 0) vbit200[0] = vbit[0];
+//	printf("vbit200 %d \n",BufVal);
+
+	if((BufVal == 0)||(BufVal==100000)) vbit200[0] = vbit[0];
 	else vbit200[0] = (double)BufVal/10000.0;
 	vbit200[1] =vbit200[0];
 
@@ -348,6 +351,7 @@ void Parse19Sn(unsigned char *Buf)
 	BufVal = ((Buf[24]&0x0f)*100)+((Buf[25]&0x0f)*10)
 			+(Buf[26]&0x0f);
 
+//	printf("offsetvbit200 %d \n",BufVal);
 	if(BufVal == 0) OffsetVBit200[0] = OffsetVBit[0];
 	else OffsetVBit200[0] = (double)3000.0/BufVal;
 	OffsetVBit200[1] =OffsetVBit200[0];
@@ -355,11 +359,12 @@ void Parse19Sn(unsigned char *Buf)
 	BufVal = ((Buf[27]&0x0f)*100)+((Buf[28]&0x0f)*10)
 			+(Buf[29]&0x0f);
 
+//	printf("offsetcenterval200 %d \n",BufVal);
 	if(BufVal == 0) OffsetCenterVal200[0] = OffsetCenterVal[0];
 	else OffsetCenterVal200[0] = BufVal;
 	OffsetCenterVal200[1] =OffsetCenterVal200[0];
 	
-//	printf("%f %f %d %d %f %f %d ",
+//	printf("%f %f %d %d %f %f %d\n ",
 //	       vbit[0],OffsetVBit[0],OffsetCenterVal[0],serialNumber,
 //	       vbit200[0],OffsetVBit200[0],OffsetCenterVal200[0]);
 	
@@ -608,9 +613,12 @@ void DAC_Out(unsigned short DacVal)
 
     unsigned char MSB, LSB;
 
-    LSB = (unsigned char)(DacVal & 0x00ff);
+//	printf("DacVal %d\n",DacVal);
+
+	LSB = (unsigned char)(DacVal & 0x00ff);
     MSB = (unsigned char)((DacVal & 0xff00) >> 8);
 
+	
 	fd_w = open(line,O_RDWR | O_NOCTTY |  O_NDELAY);	//opening serial port device for write action
 	if(fd_w < 0){
          printf("Serial error ClkRate\n");
@@ -903,6 +911,7 @@ unsigned short CalcOffsetRawValueFromVoltage(double volts,unsigned char Chan)
     int DacTmp;
 
 	DacTmp = (int)(GetOffsetCenterVal(Chan) - ((volts / ProbeAttn[Chan]) / GetOffsetVBit(Chan)));
+//	printf("DacTmp %d\n",DacTmp);
 	
 	if (DacTmp < 0) DacVal = 0x0000;
     else if (DacTmp > 0x0fff) DacVal = 0x0fff;
@@ -930,16 +939,14 @@ double CalcVoltageFromRawValue(unsigned short pt, double vbit, int ProbeAttn)
 }
 
 //-----------------------------------------------------
-void VoltageConvert()
+void VoltageConvert19()
 {
     int ii; //, PageSize = 5;
-    double VbitA,VbitB;
-    int PAtnA,PAtnB;	
+    double VbitA;
+    int PAtnA;	
 
     VbitA=GetVbit(0);
-    VbitB=GetVbit(1);
     PAtnA=ProbeAttn[0];
-    PAtnB=ProbeAttn[1];
 
 
     for (ii = 0; ii < 1024; ii++)
@@ -948,11 +955,6 @@ void VoltageConvert()
                 CalcVoltageFromRawValue(AnalogDataA[ii],
                 VbitA,
                 PAtnA);
-
-            AnalogVoltageDataB[ii] =
-                CalcVoltageFromRawValue(AnalogDataB[ii],
-                VbitB,
-                PAtnB);
         }
 }
 //-----------------------------------------------------
@@ -1828,7 +1830,7 @@ void ReadQueryString()
 					if(i==22){
 						if(sid==CurrSid){
 						ReadBuffer19();
-						VoltageConvert();
+						VoltageConvert19();
 						WriteMsoData19();
 		//				wd =1;
 						MsoBusy=0;
@@ -1856,7 +1858,7 @@ void ReadQueryString()
 					for(i=0;i<2;i++) printf("OffsetVBit200[%d]=%f\n",i,OffsetVBit200[i]);
 					for(i=0;i<2;i++) printf("OffsetCenterVal200[%d]=0x%x\n",i,OffsetCenterVal200[i]);
 				}
-				VoltageConvert();
+				VoltageConvert19();
 				WriteMsoData19();
 				MsoBusy=0;
 			}
