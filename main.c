@@ -351,22 +351,22 @@ void Parse19Sn(unsigned char *Buf)
 	BufVal = ((Buf[24]&0x0f)*100)+((Buf[25]&0x0f)*10)
 			+(Buf[26]&0x0f);
 
-//	printf("offsetvbit200 %d \n",BufVal);
-	if(BufVal == 0) OffsetVBit200[0] = OffsetVBit[0];
-	else OffsetVBit200[0] = (double)3000.0/BufVal;
-	OffsetVBit200[1] =OffsetVBit200[0];
-	
-	BufVal = ((Buf[27]&0x0f)*100)+((Buf[28]&0x0f)*10)
-			+(Buf[29]&0x0f);
-
 //	printf("offsetcenterval200 %d \n",BufVal);
 	if(BufVal == 0) OffsetCenterVal200[0] = OffsetCenterVal[0];
 	else OffsetCenterVal200[0] = BufVal;
 	OffsetCenterVal200[1] =OffsetCenterVal200[0];
 	
-//	printf("%f %f %d %d %f %f %d\n ",
-//	       vbit[0],OffsetVBit[0],OffsetCenterVal[0],serialNumber,
-//	       vbit200[0],OffsetVBit200[0],OffsetCenterVal200[0]);
+	BufVal = ((Buf[27]&0x0f)*100)+((Buf[28]&0x0f)*10)
+			+(Buf[29]&0x0f);
+
+//	printf("offsetvbit200 %d \n",BufVal);
+	if(BufVal == 0) OffsetVBit200[0] = OffsetVBit[0];
+	else OffsetVBit200[0] = (double)3000.0/BufVal;
+	OffsetVBit200[1] =OffsetVBit200[0];
+	
+	printf("%f %f %d %d %f %f %d\n ",
+	       vbit[0],OffsetVBit[0],OffsetCenterVal[0],serialNumber,
+	       vbit200[0],OffsetVBit200[0],OffsetCenterVal200[0]);
 	
 	msoType = Buf[11];
 	modelNumber = Buf[12];
