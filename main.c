@@ -92,6 +92,7 @@ static double GetVbit(unsigned char Chan);
 static unsigned short CalcOffsetRawValueFromVoltage(double volts,unsigned char Chan);
 static unsigned short CalcRawValueFromVoltage(double val, unsigned char Chan);
 static double CalcVoltageFromRawValue(unsigned short pt, double vbit, int ProbeAttn);
+static double CalcVoltageFromRawValueFast(unsigned short pt, double vbitP,float Cntr);
 static void VoltageConvert19();
 static void ConfigureHardwareMSO19();
 static void send_error(char *error_text);
@@ -940,22 +941,39 @@ double CalcVoltageFromRawValue(unsigned short pt, double vbit, int ProbeAttn)
 }
 
 //-----------------------------------------------------
+double CalcVoltageFromRawValueFast(unsigned short pt, double vbitP,float Cntr)
+{
+	double ret;
+    double Vtmp, Vtmp2; 
+    Vtmp = pt;
+    Vtmp2 = (Cntr - Vtmp);
+    ret = Vtmp2 * vbitP;
+    return ret;
+}
+
+//-----------------------------------------------------
 void VoltageConvert19()
 {
     int ii; //, PageSize = 5;
     double VbitA;
     int PAtnA;	
+	double vbitP;
+	float Cntr;
 
     VbitA=GetVbit(0);
     PAtnA=ProbeAttn[0];
-
+	vbitP = VbitA * PAtnA;
+	Cntr=1023.0 - VGND;
 
     for (ii = 0; ii < 1024; ii++)
         {
+//            AnalogVoltageDataA[ii] =
+//                CalcVoltageFromRawValue(AnalogDataA[ii],
+//                VbitA,
+//                PAtnA);
             AnalogVoltageDataA[ii] =
-                CalcVoltageFromRawValue(AnalogDataA[ii],
-                VbitA,
-                PAtnA);
+                CalcVoltageFromRawValueFast(AnalogDataA[ii],
+                vbitP,Cntr);
         }
 }
 //-----------------------------------------------------
@@ -1308,7 +1326,7 @@ int WriteMsoData19()
 	{
 
         for (Cnt = 0; Cnt < 1023; Cnt++)
-			fprintf(fp,"%f\t%d\n",AnalogVoltageDataA[Cnt],LogicData[Cnt]); 
+			fprintf(fp,"%.3f\t%d\n",AnalogVoltageDataA[Cnt],LogicData[Cnt]); 
 		
 		fclose(fp);
 		ret = 1;
