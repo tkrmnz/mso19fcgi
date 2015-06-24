@@ -525,7 +525,8 @@ unsigned char CheckTriggerStatus()
 
 
 		STOP = FALSE;
-		while (STOP==FALSE){       // loop for input 
+		while ((STOP==FALSE)&&(lcnt<50)){       // loop for input 
+//		while (STOP==FALSE){       // loop for input 
 			ioctl(fd_w, FIONREAD, &bytes);
 			if(bytes >= 1) {
 //				res = read(fd_w,buf,bytes);
