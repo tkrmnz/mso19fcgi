@@ -364,9 +364,9 @@ void Parse19Sn(unsigned char *Buf)
 	else OffsetVBit200[0] = (double)3000.0/BufVal;
 	OffsetVBit200[1] =OffsetVBit200[0];
 	
-	printf("%f %f %d %d %f %f %d\n ",
-	       vbit[0],OffsetVBit[0],OffsetCenterVal[0],serialNumber,
-	       vbit200[0],OffsetVBit200[0],OffsetCenterVal200[0]);
+//	printf("%f %f %d %d %f %f %d\n ",
+//	       vbit[0],OffsetVBit[0],OffsetCenterVal[0],serialNumber,
+//	       vbit200[0],OffsetVBit200[0],OffsetCenterVal200[0]);
 	
 	msoType = Buf[11];
 	modelNumber = Buf[12];
@@ -1314,7 +1314,7 @@ int WriteMsoData19()
 	}
 	else ret = 0;
 
-	printf("%d\n%d\n",29,CurrSid);
+//	printf("%d\n%d\n",29,CurrSid);
 	return ret;
 
 }
@@ -1746,7 +1746,7 @@ void ReadQueryString()
 	//				printf("Armed\n\n");	
 					printf("%d\n%d\n",28,CurrSid);
 				}
-				else printf("%d\n%d\n",36,CurrSid);
+				else printf("%d\n%d\n",36,CurrSid);//busy
 
 			}
 			else if(strcmp(name_val_pairs[nv_entry_number].value,"A")==0)
@@ -1836,7 +1836,7 @@ void ReadQueryString()
 						MsoBusy=0;
 						printf("%d\n%d\n",29,CurrSid);
 						}
-						else printf("%d\n%d\n",35,CurrSid);
+						else printf("%d\n%d\n",35,CurrSid);//busy
 					}//22 waiting for Readback
 					else printf("%d\n%d\n",i,sid);
 				}//"t"
